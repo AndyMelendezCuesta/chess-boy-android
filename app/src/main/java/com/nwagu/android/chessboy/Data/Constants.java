@@ -11,13 +11,6 @@ public interface Constants {
     int GAME_MODE_MULTI_LOCAL = 4;
     int GAME_MODE_PRACTICE = 5;
 
-    // Game mode titles
-    String GAME_TITLE_MULTI_BLUETOOTH = "Bluetooth Multiplayer";
-    String GAME_TITLE_AI_WHITE = "With AI";
-    String GAME_TITLE_AI_BLACK = "With AI";
-    String GAME_TITLE_MULTI_LOCAL = "Local Multiplayer";
-    String GAME_TITLE_PRACTICE = "Random Mode";
-
     // Play states
     int DRAW_50 = 5;
     int MATE = 6;

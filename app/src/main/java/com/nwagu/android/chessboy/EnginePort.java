@@ -79,7 +79,7 @@ class EnginePort extends GameControl {
                      game.repair();
                      System.gc();
                      game.isLocalTurn = true;
-                     pa.renderBoard();
+                     pa.boardManager.renderBoard();
 					 pa.soundManager.soundMove();
                      System.gc();
                  }
@@ -156,7 +156,7 @@ class EnginePort extends GameControl {
             //================================ this should be done in PlayActivity: this method returns a boolean for crying out loud
             game.undoLastMove(true);
             game.repair();
-            pa.renderBoard();
+            pa.boardManager.renderBoard();
             game.isLocalTurn = true;
             //===============================
 

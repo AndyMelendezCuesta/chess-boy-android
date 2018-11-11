@@ -68,7 +68,7 @@ public class RandomMoveGenerator extends AsyncTask<Void, Void, Void> {
             game.playMove(finalMove, 2);
             game.repair();
             game.isLocalTurn = true;
-            activity.renderBoard();
+            activity.boardManager.renderBoard();
             activity.soundManager.soundMove();
 
             if((game.gameMode == Constants.GAME_MODE_AI_BLACK) || (game.gameMode == Constants.GAME_MODE_AI_WHITE)) {

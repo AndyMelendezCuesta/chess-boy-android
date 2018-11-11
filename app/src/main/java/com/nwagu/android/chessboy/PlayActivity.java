@@ -1,6 +1,7 @@
 package com.nwagu.android.chessboy;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Point;
@@ -73,6 +74,7 @@ public class PlayActivity extends AppCompatActivity {
     Animation animSlideOutLeft;
     Animation animslideOutRight;
 
+    BoardManager boardManager;
     BluetoothManager bluetoothManager;
     SoundManager soundManager;
     public final BluetoothHandler bluetoothHandler = new BluetoothHandler(new WeakReference<>(this));
@@ -84,7 +86,7 @@ public class PlayActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        try {Thread.sleep(1000);} catch (InterruptedException ignored) {} //give time for user to enjoy splash screen:)
+        try {Thread.sleep(1000);} catch (InterruptedException ignored) {} // give time for user to enjoy splash screen:)
         setTheme(R.style.MyTheme);
         setContentView(R.layout.activity_play);
 
@@ -140,6 +142,7 @@ public class PlayActivity extends AppCompatActivity {
         animslideOutRight = AnimationUtils.loadAnimation(this, R.anim.slide_out_right);
 
 
+        boardManager = new BoardManager(PlayActivity.this);
         bluetoothManager = new BluetoothManager(this);
         soundManager = new SoundManager(this, soundControlButton);
 
@@ -150,10 +153,10 @@ public class PlayActivity extends AppCompatActivity {
         screenHeight = size.y;
 
         settingsPanel.requestLayout();
-        settingsPanel.getLayoutParams().height = screenWidth - 10; // -8 because of the margin to allow for
+        settingsPanel.getLayoutParams().height = screenWidth - 10; // 'minus 10' because of the margin to allow for
 
         setHeader(game.gameMode);
-        renderBoard();
+        boardManager.renderBoard();
         heyJude();
 
     } // End of onCreate Method
@@ -163,16 +166,16 @@ public class PlayActivity extends AppCompatActivity {
         boolean hasAValidMoveBeenMade = false;
         if (game.isLocalTurn) {
             if (prevView == null) {
-                //check if start move is valid
-                StringBuffer allMoves = game.getAllMoves(true, game.localWhite); //first get all possible moves
+                // check if start move is valid
+                StringBuffer allMoves = game.getAllMoves(true, game.localWhite); // first get all possible moves
                 for (int i = 0; i < allMoves.length(); i = i + 5) {
                     if ((game.boardArray[Integer.parseInt(view.getTag().toString())][0] == Integer.parseInt(allMoves.substring(i, (i + 1)))) && (game.boardArray[Integer.parseInt(view.getTag().toString())][1] == Integer.parseInt(allMoves.substring((i + 1), (i + 2))))) {
-                        if (prevView == null) { //is this check necessary again?
+                        if (prevView == null) { // Is this check necessary again?
                             prevView = (ImageButton) view;
                             prevView.setBackgroundResource(R.drawable.path_place_background);
-                            //prevView.setForeground(R.drawable.path_place_background);
+                            // prevView.setForeground(R.drawable.path_place_background);
                         }
-                        //find destination view by tag and set that view cronky
+                        // Find destination view by tag and set that view cronky
                         int tag = ((Integer.parseInt(allMoves.substring((i + 2), (i + 3))) - 1) * 8) + (Integer.parseInt(allMoves.substring((i + 3), (i + 4))) - 1);
                         ImageButton pathPlace;
                         try {
@@ -199,7 +202,7 @@ public class PlayActivity extends AppCompatActivity {
             } else {
                 for (int i = 0; i < pathViews.size(); i++) {
                     if (view == pathViews.get(i)) {
-                        //make move backend first
+                        // Make move backend first
                         boolean promoTime = game.playMove(Integer.parseInt(prevView.getTag().toString()), Integer.parseInt(view.getTag().toString()), 1);
 
                         game.repair();
@@ -210,12 +213,12 @@ public class PlayActivity extends AppCompatActivity {
                             Toast.makeText(PlayActivity.this, "Invalid move!", Toast.LENGTH_SHORT).show();
                             soundManager.soundCheck();
                             game.repair();
-                            renderBoard(); //this is to remove the path dots
+                            boardManager.renderBoard(); // This is to remove the path dots
                         } else if(promoTime) {
-                            renderBoard();
+                            boardManager.renderBoard();
                             final int promoPlace = Integer.parseInt(view.getTag().toString());
 
-                            //show dialog for homeboy to choose promo piece!
+                            // Show dialog for homeboy to choose promo piece!
                             final Dialog dialog = new Dialog(this, R.style.MyDialogTheme);
                             dialog.setTitle("Promo!");
 
@@ -225,7 +228,7 @@ public class PlayActivity extends AppCompatActivity {
                                     if(keyCode == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_UP) {
                                         game.undoLastMove(true);
                                         dialog.dismiss();
-                                        renderBoard();
+                                        boardManager.renderBoard();
                                     }
                                     return false;
                                 }
@@ -280,7 +283,7 @@ public class PlayActivity extends AppCompatActivity {
                                     }
                                     game.repair();
                                     game.isLocalTurn = false;
-                                    renderBoard();
+                                    boardManager.renderBoard();
                                     heyJude();
                                 }
                             };
@@ -295,7 +298,7 @@ public class PlayActivity extends AppCompatActivity {
                                 public void onCancel(DialogInterface dialog) {
                                     game.repair();
                                     game.isLocalTurn = false;
-                                    renderBoard();
+                                    boardManager.renderBoard();
                                     heyJude();
                                 }
                             });
@@ -320,7 +323,7 @@ public class PlayActivity extends AppCompatActivity {
                             }
 
                             //ok then, make move frontend
-                            renderBoard();
+                            boardManager.renderBoard();
 
                             hasAValidMoveBeenMade = true;
 
@@ -359,7 +362,7 @@ public class PlayActivity extends AppCompatActivity {
                     renderTurnsLine(); // Render and wait for opponent to send message across bluetooth...
                     break;
                 case Constants.GAME_MODE_MULTI_LOCAL:
-                    rotateBoard();
+                    boardManager.rotateBoard();
                     break;
                 case Constants.GAME_MODE_PRACTICE:
                     new RandomMoveGenerator(new WeakReference<>(PlayActivity.this), game).execute();
@@ -381,7 +384,7 @@ public class PlayActivity extends AppCompatActivity {
                 case Constants.GAME_MODE_MULTI_LOCAL:
                     game.undoLastMultiplayMove();
                     game.repair();
-                    renderBoard();
+                    boardManager.renderBoard();
                     heyJude();
                     break;
                 case Constants.GAME_MODE_AI_BLACK: case Constants.GAME_MODE_AI_WHITE:
@@ -389,7 +392,7 @@ public class PlayActivity extends AppCompatActivity {
                     enginePort.undoTwice();
                     game.undoLastMove(true);
                     game.repair();
-                    renderBoard();
+                    boardManager.renderBoard();
                     if(game.movesHistory.size() == 0 && !game.localWhite) {
                         game.isLocalTurn = false;
                         enginePort.play();
@@ -398,9 +401,9 @@ public class PlayActivity extends AppCompatActivity {
                 case Constants.GAME_MODE_PRACTICE:
                     game.undoLastMove(true);
                     game.repair();
-                    renderBoard();
+                    boardManager.renderBoard();
                     game.isLocalTurn = true;
-                    renderBoard();
+                    boardManager.renderBoard();
                     if(game.movesHistory.size() == 0 && !game.localWhite) {
                         game.isLocalTurn = false;
                         heyJude();
@@ -411,71 +414,6 @@ public class PlayActivity extends AppCompatActivity {
             }
         }
     }
-
-    /*
-    //TODO
-    This method should allow the user to switch sides in the middle of a game
-     */
-    public void rotateBoard(View view) { // method to turn table
-        if((game.gameMode != Constants.GAME_MODE_MULTI_BLUETOOTH && game.gameMode != Constants.GAME_MODE_MULTI_LOCAL) &&
-                (game.movesHistory.size() == 0)) {
-            game.rotateGame();
-            final Animation an = new RotateAnimation(0.0f, 180.0f, boardLayout.getHeight() / 2, boardLayout.getWidth() / 2);
-            an.setDuration(3000);
-            an.setRepeatCount(1);
-            an.setRepeatMode(Animation.REVERSE);
-            an.setFillAfter(true);
-            boardLayout.startAnimation(an);
-            an.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                    game.repair();
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    renderBoard();
-                    heyJude();
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-                    an.setDuration(0);
-                }
-            });
-        }
-    }
-
-    /*
-        Method to turn table for local multiplayer mode..
-     */
-    public void rotateBoard() {
-        game.rotateBoard();
-        final Animation an = new RotateAnimation(0.0f, 180.0f, boardLayout.getHeight() / 2, boardLayout.getWidth() / 2);
-        an.setDuration(1500);
-        an.setRepeatCount(1);
-        an.setRepeatMode(Animation.REVERSE);
-        an.setFillAfter(true);
-        boardLayout.startAnimation(an);
-        an.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-                game.repair();
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                renderBoard();
-                heyJude();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-                an.setDuration(0);
-            }
-        });
-    }
-
 
 
     /**
@@ -530,7 +468,7 @@ public class PlayActivity extends AppCompatActivity {
                         game.playMove(source, destination, 2); //make move backend
                         game.repair();
                         game.isLocalTurn = true;
-                        activity.renderBoard();
+                        activity.boardManager.renderBoard();
 
                     } else if (readMessage.length() > 4) { // Promotion move length
                         int orderInt = Integer.parseInt(readMessage); //readMessage is opponentsMove
@@ -544,7 +482,7 @@ public class PlayActivity extends AppCompatActivity {
                         game.boardArray[destination][4] = chosenPromoPiece;
                         game.repair();
                         game.isLocalTurn = true;
-                        activity.renderBoard();
+                        activity.boardManager.renderBoard();
 
                     } else { //then it is a communication about undo, etc..
                         switch (Integer.parseInt(readMessage)) {
@@ -561,7 +499,7 @@ public class PlayActivity extends AppCompatActivity {
                                                         game.undoLastMove(false);
                                                         game.isLocalTurn = false;
                                                         game.repair();
-                                                        activity.renderBoard();
+                                                        activity.boardManager.renderBoard();
                                                     }
 
                                                 })
@@ -579,7 +517,7 @@ public class PlayActivity extends AppCompatActivity {
                                 game.undoLastMove(true);
                                 game.isLocalTurn = true;
                                 game.repair();
-                                activity.renderBoard();
+                                activity.boardManager.renderBoard();
                                 break;
                             case Constants.BLUETOOTH_UNDO_DENIED:
                                 Toast.makeText(activity, "Request denied", Toast.LENGTH_LONG).show();
@@ -608,55 +546,222 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
+    class BoardManager {
+        Context context;
+
+        BoardManager(Context context){
+            this.context = context;
+        }
+
+
+        public void renderBoard() {
+            int count = 0;
+            boardLayout.removeAllViews();
+
+            TableLayout table = new TableLayout(context);
+            table.removeAllViews();
+            table.invalidate();
+            table.refreshDrawableState();
+
+            boardLayout.addView(table);
+
+            table.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            table.setStretchAllColumns(true);
+            table.setOrientation(LinearLayout.VERTICAL);
+
+            // this is 1-8
+            for (int r = 1; r <= 8; r++) {
+                TableRow row = new TableRow(context);
+                row.removeAllViews();
+                row.invalidate();
+                row.refreshDrawableState();
+                table.addView(row);
+                row.setLayoutParams(new TableLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
+                // this is a-h
+                for (int c = 1; c <= 8; c++) {
+                    final RelativeLayout placeLayout = new RelativeLayout(context);
+                    ImageButton place = new ImageButton(context);
+
+                    place.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            placeClicked(v);
+                        }
+                    });
+
+                    place.setTag(count);
+
+                    place.setPadding(0, 0, 0, 0);
+                    place.setAdjustViewBounds(true);
+
+                    if (r % 2 == c % 2) {
+                        placeLayout.setBackgroundColor(Color.rgb(255, 250, 220));
+                        place.setBackgroundResource(R.drawable.white_place_background);
+                    } else {
+                        placeLayout.setBackgroundColor(Color.rgb(205, 133, 63));
+                        place.setBackgroundResource(R.drawable.black_place_background);
+                    }
+
+                    if ((count == game.lastSource) || (count == game.lastDestination))
+                        place.setBackgroundResource(R.drawable.last_move_place_background);
+
+                    count++;
+                    updatePlace(place);
+
+                    placeLayout.setLayoutParams(new TableRow.LayoutParams(
+                            TableRow.LayoutParams.MATCH_PARENT / 8,
+                            TableRow.LayoutParams.WRAP_CONTENT));
+
+                    placeLayout.addView(place, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                    row.addView(placeLayout);
+                }
+
+            }
+            renderCaptiveCages();
+            renderTurnsLine();
+
+            if(game.gameMode == Constants.GAME_MODE_AI_WHITE || game.gameMode == Constants.GAME_MODE_AI_BLACK) {
+                switch (enginePort.getStateOfPlay()) {
+                    case Constants.MATE:
+                        if(game.isLocalTurn) headerText.setText("Checkmate. You Lost.\n");
+                        else headerText.setText("Checkmate. You Win.\n");
+                        soundManager.reSoundCheck();
+                        switchGameSettingsBoards(new View(context));
+                        break;
+                    case Constants.STALEMATE:
+                        headerText.setText("Stalemate\n");
+                        switchGameSettingsBoards(new View(context));
+                        break;
+                    case Constants.DRAW_REPEAT:
+                        headerText.setText("Draw by repeat\n");
+                        switchGameSettingsBoards(new View(context));
+                        break;
+
+                    case Constants.DRAW_50:
+                        headerText.setText("Draw by 50 moves rule\n");
+                        switchGameSettingsBoards(new View(context));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+        }
+
+        /**
+         * Method to turn table for local multiplayer mode..
+         */
+        void rotateBoard() {
+            game.rotateBoard();
+            final Animation an = new RotateAnimation(0.0f, 180.0f, boardLayout.getHeight() / 2, boardLayout.getWidth() / 2);
+            an.setDuration(1500);
+            an.setRepeatCount(1);
+            an.setRepeatMode(Animation.REVERSE);
+            an.setFillAfter(true);
+            boardLayout.startAnimation(an);
+            an.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    game.repair();
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    renderBoard();
+                    heyJude();
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                    an.setDuration(0);
+                }
+            });
+        }
+
+        /**
+         * This method should allow the user to switch sides in the middle of a game
+         */
+        public void rotateBoard(View view) { // method to turn table
+            if((game.gameMode != Constants.GAME_MODE_MULTI_BLUETOOTH && game.gameMode != Constants.GAME_MODE_MULTI_LOCAL) &&
+                    (game.movesHistory.size() == 0)) {
+                game.rotateGame();
+                final Animation an = new RotateAnimation(0.0f, 180.0f, boardLayout.getHeight() / 2, boardLayout.getWidth() / 2);
+                an.setDuration(3000);
+                an.setRepeatCount(1);
+                an.setRepeatMode(Animation.REVERSE);
+                an.setFillAfter(true);
+                boardLayout.startAnimation(an);
+                an.setAnimationListener(new Animation.AnimationListener() {
+                    @Override
+                    public void onAnimationStart(Animation animation) {
+                        game.repair();
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animation animation) {
+                        boardManager.renderBoard();
+                        heyJude();
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animation animation) {
+                        an.setDuration(0);
+                    }
+                });
+            }
+        }
+
+        void removeBoardStuff() {
+            boardLayoutFrame.startAnimation(animSlideOutLeft);
+            boardLayoutFrame.setVisibility(View.INVISIBLE);
+            tRack.startAnimation(animslideOutRight);
+            tRack.setVisibility(View.INVISIBLE);
+            mRack.startAnimation(animslideOutRight);
+            mRack.setVisibility(View.INVISIBLE);
+            scrollUpToStatus();
+        }
+
+        void returnBoardStuff() {
+            boardLayoutFrame.startAnimation(animslideInRight);
+            boardLayoutFrame.setVisibility(View.VISIBLE);
+            tRack.startAnimation(animSlideInLeft);
+            tRack.setVisibility(View.VISIBLE);
+            mRack.startAnimation(animSlideInLeft);
+            mRack.setVisibility(View.VISIBLE);
+
+            animSlideInLeft.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    if(game.movesHistory.size() == 0 && !game.localWhite) {
+                        if(game.gameMode == Constants.GAME_MODE_PRACTICE) heyJude();
+                        if(game.gameMode == Constants.GAME_MODE_AI_BLACK) { heyJude(); enginePort.play(); }
+                    }
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+
+        }
+
+    }
 
 
     public void switchGameSettingsBoards(View view) {
         highlightGameMode();
         if(boardLayoutFrame.getVisibility() == View.VISIBLE) {
-            removeBoardStuff();
+            boardManager.removeBoardStuff();
         } else {
-            returnBoardStuff();
+            boardManager.returnBoardStuff();
         }
-    }
-
-    public void removeBoardStuff() {
-        boardLayoutFrame.startAnimation(animSlideOutLeft);
-        boardLayoutFrame.setVisibility(View.INVISIBLE);
-        tRack.startAnimation(animslideOutRight);
-        tRack.setVisibility(View.INVISIBLE);
-        mRack.startAnimation(animslideOutRight);
-        mRack.setVisibility(View.INVISIBLE);
-        scrollUpToStatus();
-    }
-
-    public void returnBoardStuff() {
-        boardLayoutFrame.startAnimation(animslideInRight);
-        boardLayoutFrame.setVisibility(View.VISIBLE);
-        tRack.startAnimation(animSlideInLeft);
-        tRack.setVisibility(View.VISIBLE);
-        mRack.startAnimation(animSlideInLeft);
-        mRack.setVisibility(View.VISIBLE);
-
-        animSlideInLeft.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                if(game.movesHistory.size() == 0 && !game.localWhite) {
-                    if(game.gameMode == Constants.GAME_MODE_PRACTICE) heyJude();
-                    if(game.gameMode == Constants.GAME_MODE_AI_BLACK) { heyJude(); enginePort.play(); }
-                }
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
-
     }
 
 
@@ -712,126 +817,37 @@ public class PlayActivity extends AppCompatActivity {
     public void startNewGame(int mode) {
         switch (mode) {
             case Constants.GAME_MODE_MULTI_BLUETOOTH:
-                game = new Game(mode, iAmBluetoothWhite); returnBoardStuff(); game.repair(); renderBoard(); soundManager.soundBoardSet();
+                game = new Game(mode, iAmBluetoothWhite);
                 break;
             case Constants.GAME_MODE_AI_WHITE:
                 enginePort.newGame();
-                game = new Game(mode, true); returnBoardStuff(); game.repair(); renderBoard(); soundManager.soundBoardSet();
+                game = new Game(mode, true);
                 break;
             case Constants.GAME_MODE_AI_BLACK:
                 enginePort.newGame();
-                game = new Game(mode, false); returnBoardStuff(); game.repair(); renderBoard(); soundManager.soundBoardSet();
+                game = new Game(mode, false);
                 //let engine start the game
                 //enginePort.play();
                 break;
             case Constants.GAME_MODE_MULTI_LOCAL:
-                game = new Game(mode, true); returnBoardStuff(); game.repair(); renderBoard(); soundManager.soundBoardSet();
+                game = new Game(mode, true);
                 break;
             case Constants.GAME_MODE_PRACTICE:
-                game = new Game(mode, !game.localWhite); returnBoardStuff(); game.repair(); renderBoard(); soundManager.soundBoardSet();
+                game = new Game(mode, !game.localWhite);
                 break;
             default: break;
         }
+
+        boardManager.returnBoardStuff();
+        game.repair();
+        boardManager.renderBoard();
+        soundManager.soundBoardSet();
 
         setHeader(mode);
 
     }
 
 
-    public void renderBoard() {
-        int count = 0;
-        boardLayout.removeAllViews();
-
-        TableLayout table = new TableLayout(this);
-        table.removeAllViews();
-        table.invalidate();
-        table.refreshDrawableState();
-
-        boardLayout.addView(table);
-
-        table.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-        table.setStretchAllColumns(true);
-        table.setOrientation(LinearLayout.VERTICAL);
-
-        // this is 1-8
-        for (int r = 1; r <= 8; r++) {
-            TableRow row = new TableRow(this);
-            row.removeAllViews();
-            row.invalidate();
-            row.refreshDrawableState();
-            table.addView(row);
-            row.setLayoutParams(new TableLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
-
-            // this is a-h
-            for (int c = 1; c <= 8; c++) {
-                final RelativeLayout placeLayout = new RelativeLayout(this);
-                ImageButton place = new ImageButton(this);
-
-                place.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        placeClicked(v);
-                    }
-                });
-
-                place.setTag(count);
-
-                place.setPadding(0, 0, 0, 0);
-                place.setAdjustViewBounds(true);
-
-                if (r % 2 == c % 2) {
-                    placeLayout.setBackgroundColor(Color.rgb(255, 250, 220));
-                    place.setBackgroundResource(R.drawable.white_place_background);
-                } else {
-                    placeLayout.setBackgroundColor(Color.rgb(205, 133, 63));
-                    place.setBackgroundResource(R.drawable.black_place_background);
-                }
-
-                if ((count == game.lastSource) || (count == game.lastDestination))
-                    place.setBackgroundResource(R.drawable.last_move_place_background);
-
-                count++;
-                updatePlace(place);
-
-                placeLayout.setLayoutParams(new TableRow.LayoutParams(
-                        TableRow.LayoutParams.MATCH_PARENT / 8,
-                        TableRow.LayoutParams.WRAP_CONTENT));
-
-                placeLayout.addView(place, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-                row.addView(placeLayout);
-            }
-
-        }
-        renderCaptiveCages();
-        renderTurnsLine();
-
-        if(game.gameMode == Constants.GAME_MODE_AI_WHITE || game.gameMode == Constants.GAME_MODE_AI_BLACK) {
-            switch (enginePort.getStateOfPlay()) {
-                case Constants.MATE:
-                    if(game.isLocalTurn) headerText.setText("Checkmate. You Lost.\n");
-                    else headerText.setText("Checkmate. You Win.\n");
-                    soundManager.reSoundCheck();
-                    switchGameSettingsBoards(new View(this));
-                    break;
-                case Constants.STALEMATE:
-                    headerText.setText("Stalemate\n");
-                    switchGameSettingsBoards(new View(this));
-                    break;
-                case Constants.DRAW_REPEAT:
-                    headerText.setText("Draw by repeat\n");
-                    switchGameSettingsBoards(new View(this));
-                    break;
-
-                case Constants.DRAW_50:
-                    headerText.setText("Draw by 50 moves rule\n");
-                    switchGameSettingsBoards(new View(this));
-                    break;
-                default:
-                    break;
-            }
-        }
-
-    }
 
     public void scrollUpToStatus() {
         settingsPanel.scrollTo(0, settingsPanel.getTop());
@@ -846,7 +862,7 @@ public class PlayActivity extends AppCompatActivity {
             int capturedPieceInt;
 
             if(capturedPiece.length() < 3) capturedPieceInt = Integer.parseInt(capturedPiece);
-            else { //takes care of pawn promotion capture..
+            else { // Takes care of pawn promotion capture..
                 capturedPieceInt = Integer.parseInt(capturedPiece.substring(2));
             }
 
@@ -940,43 +956,43 @@ public class PlayActivity extends AppCompatActivity {
     public void updateCaptiveCell(ImageButton place, int captive) {
         place.setBackgroundResource(R.drawable.transparent);
         switch (captive) {
-            default: // not necessary
+            default: // Not necessary
                 place.setImageResource(R.drawable.transparent);
                 break;
-            case 85: //white king, although it is not possible to capture a king
+            case 85: // White king, although it is not possible to capture a king
                 place.setImageResource(R.drawable.whiteking);
                 break;
-            case 15: //black king, although it is not possible to capture a king
+            case 15: // Black king, although it is not possible to capture a king
                 place.setImageResource(R.drawable.blackking);
                 break;
-            case 84: //white queen
+            case 84: // White queen
                 place.setImageResource(R.drawable.whitequeen);
                 break;
-            case 14: //black queen
+            case 14: // Black queen
                 place.setImageResource(R.drawable.blackqueen);
                 break;
-            case 88:case 81: //white rooks
+            case 88:case 81: // White rooks
                 place.setImageResource(R.drawable.whiterook);
                 break;
-            case 18:case 11: //black rooks
+            case 18:case 11: // Black rooks
                 place.setImageResource(R.drawable.blackrook);
                 break;
-            case 86:case 83: //white bishops
+            case 86:case 83: // White bishops
                 place.setImageResource(R.drawable.whitebishop);
                 break;
-            case 16:case 13: //black bishops
+            case 16:case 13: // Black bishops
                 place.setImageResource(R.drawable.blackbishop);
                 break;
-            case 87:case 82: //white knights
+            case 87:case 82: // White knights
                 place.setImageResource(R.drawable.whiteknight);
                 break;
-            case 17:case 12: //black knights
+            case 17:case 12: // Black knights
                 place.setImageResource(R.drawable.blackknight);
                 break;
-            case 71:case 72:case 73:case 74:case 75:case 76:case 77:case 78: //white pawns
+            case 71:case 72:case 73:case 74:case 75:case 76:case 77:case 78: // White pawns
                 place.setImageResource(R.drawable.whitepawn);
                 break;
-            case 21:case 22:case 23:case 24:case 25:case 26:case 27:case 28: //black pawns
+            case 21:case 22:case 23:case 24:case 25:case 26:case 27:case 28: // Black pawns
                 place.setImageResource(R.drawable.blackpawn);
                 break;
         }
@@ -988,12 +1004,11 @@ public class PlayActivity extends AppCompatActivity {
         } else {
             place.setBackgroundResource(R.drawable.black_place_background);
         }
-        //replace last move background in case the place is a last move place
+        // Replace last move background in case the place is a last move place
         int tagInt = Integer.parseInt(place.getTag().toString());
         if ((tagInt == game.lastSource) || (tagInt == game.lastDestination))
             place.setBackgroundResource(R.drawable.last_move_place_background);
     }
-
 
 
     public void highlightGameMode() { //hmm.. see coding
@@ -1005,7 +1020,6 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
-
     public void toggleSoundPref(View view) {
         soundManager.toggleSoundPref();
     }
@@ -1014,19 +1028,19 @@ public class PlayActivity extends AppCompatActivity {
         String text;
         switch (gameMode) {
             case Constants.GAME_MODE_MULTI_BLUETOOTH:
-                text = Constants.GAME_TITLE_MULTI_BLUETOOTH;
+                text = getResources().getString(R.string.game_title_multi_bluetooth);
                 break;
             case Constants.GAME_MODE_AI_WHITE:
-                text = Constants.GAME_TITLE_AI_WHITE;
+                text = getResources().getString(R.string.game_title_ai_white);
                 break;
             case Constants.GAME_MODE_AI_BLACK:
-                text = Constants.GAME_TITLE_AI_BLACK;
+                text = getResources().getString(R.string.game_title_ai_black);
                 break;
             case Constants.GAME_MODE_MULTI_LOCAL:
-                text = Constants.GAME_TITLE_MULTI_LOCAL;
+                text = getResources().getString(R.string.game_title_multi_local);
                 break;
             case Constants.GAME_MODE_PRACTICE:
-                text = Constants.GAME_TITLE_PRACTICE;
+                text = getResources().getString(R.string.game_title_practice);
                 break;
             default: text = Constants.APP_NAME; break;
         }
@@ -1046,9 +1060,6 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
-
-
-    //====================== WRAP-UP METHODS ===========================================================
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
@@ -1079,7 +1090,7 @@ public class PlayActivity extends AppCompatActivity {
                 if(!game.isLocalTurn) {
                     game = (Game) data.getSerializableExtra("yes");
                     game.repair(); //even after repairing in the processor class?
-                    renderBoard();
+                    boardManager.renderBoard();
                     game.isLocalTurn = true;
                 }
                 break;
@@ -1122,7 +1133,7 @@ public class PlayActivity extends AppCompatActivity {
     public void onBackPressed() {
 
         if(boardLayoutFrame.getVisibility() == View.INVISIBLE) {
-            returnBoardStuff();
+            boardManager.returnBoardStuff();
             return;
         }
 
@@ -1141,7 +1152,7 @@ public class PlayActivity extends AppCompatActivity {
                                     public void onClick(DialogInterface abc, int def) {
                                         game = loadGame(); //load last game from last point
                                         game.repair();
-                                        renderBoard();
+                                        boardManager.renderBoard();
                                         Toast.makeText(PlayActivity.this, "Last game loaded", Toast.LENGTH_LONG).show();
                                     }
 
@@ -1234,6 +1245,9 @@ public class PlayActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Class defines what happens as app is closed
+     */
     private static class ExitSequence extends AsyncTask<Void, Void, Void> {
 
         private final WeakReference<PlayActivity> mActivity;

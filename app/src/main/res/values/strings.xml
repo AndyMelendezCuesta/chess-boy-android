@@ -3,10 +3,21 @@
 
     <string name="app_name">Chess Boy</string>
 
+    <!-- Game mode titles -->
+    <string name="game_title_multi_bluetooth">Bluetooth Multiplayer</string>
+    <string name="game_title_ai_black">With AI</string>
+    <string name="game_title_ai_white">With AI</string>
+    <string name="game_title_multi_local">Local Multiplayer</string>
+    <string name="game_title_practice">Random Mode</string>
+
+    <!-- Bluetooth -->
     <string name="scanning">Scanning devices</string>
     <string name="select_device">Select device</string>
     <string name="none_found">No devices found</string>
+    <string name="be_white">Send (W)</string>
+    <string name="be_black">Receive (W)</string>
 
+    <!-- Settings texts -->
     <string name="settings_foot_note">Chess Boy, Inc.</string>
     <string name="default_game_status"> </string>
     <string name="settings_game_controls">Game controls:</string>
@@ -21,17 +32,16 @@
     <string name="mode_description_fischer">Chess960</string>
     <string name="mode_description_online">Chess Online</string>
 
-    <string name="stats">menu</string>
+    <string name="menu">menu</string>
     <string name="promo_message">Pawn promotion</string>
+
+    <!-- PGN -->
     <string name="close_pgn">Close</string>
     <string name="share_pgn">Share</string>
     <string name="pgn_placeholder">No PGN to show</string>
-
-    <string name="be_white">Send (W)</string>
-    <string name="be_black">Receive (W)</string>
-
-    <string name="image_button_content_desc">image</string>
     <string name="pgn_of_game">PGN of game</string>
     <string name="pgn">PGN</string>
+
+    <string name="image_button_content_desc">image</string>
 
 </resources>
