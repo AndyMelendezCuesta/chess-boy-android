@@ -7,7 +7,7 @@
 <img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png" alt="Get it on Google Play" height="80"/></a>
 
 <a href="https://galaxy.store/chessboy" target="_blank">
-<img src="https://galaxy.store/badgeImage" alt="Available on Samsung Galaxy Apps" style="max-width: 100%; height: auto;"></a>
+<img src="https://galaxy.store/badgeImage" alt="Available on Samsung Galaxy Apps" height="80"></a>
 
 ### From store listing:
 
